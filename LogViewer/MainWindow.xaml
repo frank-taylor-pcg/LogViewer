@@ -1,0 +1,129 @@
+﻿<Window
+	x:Class="LogViewer.MainWindow"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:converters="clr-namespace:LogViewer.Converters"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+	xmlns:local="clr-namespace:LogViewer"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns:model="clr-namespace:LogViewer.Model"
+	Title="Log Viewer"
+	Width="1600"
+	Height="900"
+	Background="#222"
+	FontSize="16"
+	Foreground="White"
+	mc:Ignorable="d">
+
+	<Window.CommandBindings>
+		<CommandBinding
+			CanExecute="Open_CanExecute"
+			Command="Open"
+			Executed="Open_Executed" />
+
+		<!--  WPF doesn't offer a default "Exit" command binding so this is a bit more involved  -->
+		<CommandBinding
+			CanExecute="ExitCommand_CanExecute"
+			Command="{x:Static local:MainWindow.ExitCommand}"
+			Executed="ExitCommand_Executed" />
+	</Window.CommandBindings>
+
+	<Window.Resources>
+		<converters:ListToStringConverter x:Key="ListToStringConverter" />
+		<converters:SeverityToColorConverter x:Key="SeverityToColorConverter" />
+	</Window.Resources>
+
+	<DockPanel Background="Transparent">
+		<Menu DockPanel.Dock="Top">
+			<MenuItem Header="File">
+				<MenuItem Command="Open" />
+				<MenuItem Command="{x:Static local:MainWindow.ExitCommand}" Header="Exit" />
+			</MenuItem>
+		</Menu>
+
+		<StatusBar
+			Background="Transparent"
+			DockPanel.Dock="Bottom"
+			Foreground="White">
+			<StatusBarItem HorizontalAlignment="Right">
+				<TextBlock Text="{Binding StatusMessage}" />
+			</StatusBarItem>
+		</StatusBar>
+
+		<!--
+			I'm not happy with the presentation of this TreeView.  I'd like the fields to align between entries without hard-coding the widths.
+		-->
+		<ScrollViewer Background="Transparent">
+			<ContentControl Margin="10" Background="Transparent">
+				<TreeView Background="Transparent" ItemsSource="{Binding LogEntries}">
+					<TreeView.Resources>
+						<HierarchicalDataTemplate DataType="{x:Type model:LogEntry}" ItemsSource="{Binding Extra}">
+							<Grid ToolTip="{Binding Primary.Details, Converter={StaticResource ListToStringConverter}}">
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="200" />
+									<ColumnDefinition Width="80" />
+									<ColumnDefinition Width="60" />
+									<ColumnDefinition Width="1050" />
+									<ColumnDefinition Width="Auto" />
+								</Grid.ColumnDefinitions>
+								<TextBlock
+									Grid.Column="0"
+									Foreground="White"
+									Text="{Binding Primary.Timestamp}" />
+
+								<TextBlock
+									Grid.Column="1"
+									Foreground="{Binding Primary.Severity, Converter={StaticResource SeverityToColorConverter}}"
+									Text="{Binding Primary.Severity}" />
+
+								<TextBlock
+									Grid.Column="2"
+									FontWeight="Bold"
+									Foreground="White"
+									Text="{Binding Primary.ErrorCode}" />
+
+								<StackPanel Grid.Column="3" Orientation="Horizontal">
+									<TextBlock Foreground="White" Text="{Binding Primary.Description}" />
+									<TextBlock
+										Margin="20,0"
+										Foreground="White"
+										Text="{Binding Primary.Details[0]}" />
+								</StackPanel>
+
+								<StackPanel Grid.Column="4" Orientation="Horizontal">
+									<TextBlock Foreground="Red" Text=" Duplicates =&gt; [" />
+									<TextBlock Foreground="Red" Text="{Binding Duplicates.Count}" />
+									<TextBlock Foreground="Red" Text="]" />
+								</StackPanel>
+
+							</Grid>
+						</HierarchicalDataTemplate>
+
+						<DataTemplate DataType="{x:Type model:LineEntry}">
+							<StackPanel
+								Margin="20,0"
+								Orientation="Horizontal"
+								ToolTip="{Binding Details, Converter={StaticResource ListToStringConverter}}">
+								<TextBlock
+									Width="80"
+									Foreground="{Binding Severity, Converter={StaticResource SeverityToColorConverter}}"
+									Text="{Binding Severity}" />
+								<TextBlock
+									Width="60"
+									FontWeight="Bold"
+									Foreground="White"
+									Text="{Binding ErrorCode}" />
+								<TextBlock Foreground="White" Text="{Binding Description}" />
+								<TextBlock
+									Margin="20,0"
+									Foreground="White"
+									Text="{Binding Details[0]}" />
+							</StackPanel>
+						</DataTemplate>
+					</TreeView.Resources>
+				</TreeView>
+			</ContentControl>
+
+		</ScrollViewer>
+	</DockPanel>
+</Window>
